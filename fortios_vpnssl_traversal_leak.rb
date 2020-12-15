@@ -175,7 +175,7 @@ class MetasploitModule < Msf::Auxiliary
         print_error(message('No credential(s) found!'))
         return
       end
-      
+
       print_good(message("#{creds.length} credential(s) found!"))
       report_creds(creds)
     end
